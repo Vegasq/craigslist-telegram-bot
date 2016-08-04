@@ -1,0 +1,3 @@
+TELEGRAM_TOKEN = ""
+MONGO_HOST = "localhost"
+MONGO_PORT = 32770
