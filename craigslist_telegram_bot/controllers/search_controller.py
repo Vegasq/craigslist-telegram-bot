@@ -1,15 +1,18 @@
 from craigslist_telegram_bot import utils
-from craigslist_telegram_bot import db
 from craigslist_telegram_bot import feed
+from craigslist_telegram_bot.log import LOG
 
 
-@utils.city_required
-def search(bot, update):
-    user_id = utils.get_user_id(update)
-    cm = db.CityModel()
-    user_city = cm.get_city(user_id)
+@utils.context_wrapper
+def search(context, bot, update):
+    # It's not actually context, but information about next steps.
+    # Rename it when will have a clue how it should be named.
+    if context.action_required:
+        return context.next_step(bot, update)
 
-    posts = feed.get_posts(user_city, update.message.text)
+    LOG.debug("Search actionn for user: %s, keyword: %s" %
+              (context.user_id, update.message.text))
+    posts = feed.get_posts(context.city, update.message.text)
 
     text = ""
     for p in posts:

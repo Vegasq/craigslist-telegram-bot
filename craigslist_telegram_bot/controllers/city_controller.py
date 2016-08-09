@@ -3,7 +3,8 @@ from craigslist_telegram_bot import db
 from craigslist_telegram_bot.log import LOG
 
 
-def city(bot, update):
+@utils.context_wrapper
+def city(context, bot, update):
     city_name = utils.extract_command_value(update)
     if city_name not in utils.get_craigslist_sites():
         bot.sendMessage(
@@ -20,7 +21,8 @@ def city(bot, update):
     utils.send_message_with_keyboard(bot, update, "City set to %s" % city_name)
 
 
-def citylist(bot, update):
+@utils.context_wrapper
+def citylist(context, bot, update):
     LOG.debug('Requesting citylist')
     cities_list = utils.get_craigslist_sites()
     cities_list = sorted(cities_list)

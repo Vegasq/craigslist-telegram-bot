@@ -1,5 +1,5 @@
+from craigslist_telegram_bot.log import LOG
 import feedparser
-import logging
 import re
 
 
@@ -34,7 +34,7 @@ class Post(object):
         try:
             price = int(self.price_regex.search(self._data["title"]).group(1))
         except (AttributeError, IndexError):
-            logging.error(
+            LOG.error(
                 "Price not found in title '%s'" % self._data["title"])
             price = None
         return price
@@ -70,7 +70,7 @@ class Posts(object):
         self._parsed_feed = parsed_feed
         self._posts = []
         if not self._parsed_feed["entries"]:
-            logging.error("Empty result")
+            LOG.error("Empty result")
         else:
             for p in self._parsed_feed["entries"]:
                 self._posts.append(Post(p))
@@ -97,5 +97,7 @@ class Posts(object):
 def get_posts(city, query):
     url = CRAIGLIST_SEARCH_URL.format(
         city=city, search=query.replace(" ", "+"))
+    LOG.debug(url)
     parsed_feed = feedparser.parse(url)
+
     return Posts(parsed_feed)

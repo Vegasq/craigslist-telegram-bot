@@ -8,16 +8,33 @@ from craigslist_telegram_bot import exceptions
 import telegram
 
 
-def extract_command_value(update):
+def context_wrapper(fn):
+    def internal_context_wrapper(bot, update):
+        user_id = get_user_id(update)
+        city_name = extract_command_value(update)
+
+        ctx = db.ContextModel(
+            user_id=user_id,
+            city=city_name
+        )
+        return fn(ctx, bot, update)
+    return internal_context_wrapper
+
+
+def extract_command_value(update, value_required=False):
     LOG.debug("Extract value from command.")
     message = update.to_dict()["message"]["text"]
     if not message.startswith('/'):
-        raise exceptions.CommandNotFound('Missed starting /')
+        LOG.debug("Command not found")
+        return message
     r = re.compile(r'/\w+(\ +)(.+)')
     try:
         keyword = r.search(message).group(2)
     except AttributeError:
-        raise exceptions.CommandRequiresValue()
+        if value_required:
+            raise exceptions.CommandRequiresValue()
+        else:
+            return None
     if not keyword:
         raise Exception('Keyword is empty')
     return keyword
@@ -60,8 +77,20 @@ def chunks(l, n):
         yield l[i:i+n]
 
 
+def send_message_with_unwatch_keyboard(bot, update, text, watchlist):
+    reply_markup = telegram.ReplyKeyboardMarkup(
+        watchlist, resize_keyboard=True)
+
+    bot.sendMessage(chat_id=update.message.chat_id,
+                    text=text,
+                    reply_markup=reply_markup,
+                    parse_mode='Markdown',
+                    disable_web_page_preview=True)
+
+
 def send_message_with_keyboard(bot, update, text):
-    custom_keyboard = [["/update " + telegram.emoji.Emoji.ANTENNA_WITH_BARS,
+    custom_keyboard = [["/watch", "/unwatch"],
+                       ["/update " + telegram.emoji.Emoji.ANTENNA_WITH_BARS,
                         "/watchlist " + telegram.emoji.Emoji.WATCH,
                         "/help " + telegram.emoji.Emoji.BOOKS]]
 

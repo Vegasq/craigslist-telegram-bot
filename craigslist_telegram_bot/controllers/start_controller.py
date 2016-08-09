@@ -27,16 +27,19 @@ Avaliable commands:
 """
 
 
-def start(bot, update):
+@utils.context_wrapper
+def start(context, bot, update):
     utils.send_message_with_keyboard(bot, update, message)
 
 
-def restart(bot, update):
+@utils.context_wrapper
+def restart(context, bot, update):
     db.PostsModel().delete_all()
     db.WatchModel().delete_all()
     db.CityModel().delete_all()
     utils.send_message_with_keyboard(bot, update, "Total reset")
 
 
-def help(bot, update):
+@utils.context_wrapper
+def help(context, bot, update):
     utils.send_message_with_keyboard(bot, update, help_message)
