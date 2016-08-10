@@ -1,24 +1,55 @@
 import re
 import requests
+import time
 
 from craigslist_telegram_bot import db
+from craigslist_telegram_bot import utils
 from craigslist_telegram_bot.log import LOG
 from craigslist_telegram_bot import exceptions
 
 import telegram
 
 
+def set_next_step_to_city_request(context):
+    context.set_context({
+        'function': "craigslist_telegram_bot.controllers.city_controller",
+        'method': "city"})
+
+
 def context_wrapper(fn):
     def internal_context_wrapper(bot, update):
         user_id = get_user_id(update)
-        city_name = extract_command_value(update)
+        cm = db.CityModel(user_id=user_id)
 
         ctx = db.ContextModel(
             user_id=user_id,
-            city=city_name
+            city=cm.city
         )
+
+        if not cm.city and is_update_contain_citylist_command(update):
+            # do staff
+            pass
+        elif (not cm.city and is_update_contain_command(update)) or\
+                (not cm.city and not ctx.is_next_step_city_set()):
+            set_next_step_to_city_request(ctx)
+            message = "Tell us city you are from:"
+            utils.send_message_with_keyboard(bot, update, message)
+            return
+
         return fn(ctx, bot, update)
     return internal_context_wrapper
+
+
+def is_update_contain_command(update):
+    if update.to_dict()["message"]["text"].startswith('/'):
+        return True
+    return False
+
+
+def is_update_contain_citylist_command(update):
+    if update.to_dict()["message"]["text"].startswith('/citylist'):
+        return True
+    return False
 
 
 def extract_command_value(update, value_required=False):
@@ -102,3 +133,15 @@ def send_message_with_keyboard(bot, update, text):
                     reply_markup=reply_markup,
                     parse_mode='Markdown',
                     disable_web_page_preview=True)
+
+
+def timing(f):
+    def wrap(*args, **kwargs):
+        LOG.error(args)
+        LOG.error(kwargs)
+        time1 = time.time()
+        ret = f(*args, **kwargs)
+        time2 = time.time()
+        LOG.error('function took %s ms' % (time2-time1))
+        return ret
+    return wrap

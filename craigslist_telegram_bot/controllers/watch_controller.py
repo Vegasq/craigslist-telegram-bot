@@ -1,6 +1,9 @@
+import asyncio
+
 from craigslist_telegram_bot import utils
 from craigslist_telegram_bot import db
 from craigslist_telegram_bot import feed
+from craigslist_telegram_bot.log import LOG
 
 
 def _ask_for_keyword(context, bot, update):
@@ -98,6 +101,46 @@ def _get_new_posts(context):
 def updates(context, bot, update):
     """Returns list of updated posts"""
     posts = _get_new_posts(context)
+
+    if not posts:
+        utils.send_message_with_keyboard(bot, update, "No updates so far.")
+        return
+
+    for ten_posts in utils.chunks(posts, 10):
+        updates = ""
+        for post in ten_posts:
+            updates += post.oneline
+        utils.send_message_with_keyboard(bot, update, updates)
+
+
+def _get_new_posts_async(context):
+    wm = db.WatchModel(context.user_id)
+    pm = db.PostsModel()
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    tasks = []
+    for item in wm.watchlist():
+        LOG.error(context.city)
+        tasks.append(asyncio.ensure_future(
+            feed.get_posts_async(loop, context.city, item['keyword'])))
+
+    loop.run_until_complete(asyncio.gather(*tasks))
+    loop.close()
+
+    posts = []
+    for task_result in tasks:
+        for post in task_result.result():
+            if not pm.is_post_seen(context.user_id, post.post_id):
+                posts.append(post)
+                pm.mark_as_seen(context.user_id, post.post_id)
+    return posts
+
+
+@utils.context_wrapper
+def updates_async(context, bot, update):
+    """Returns list of updated posts"""
+    posts = _get_new_posts_async(context)
 
     if not posts:
         utils.send_message_with_keyboard(bot, update, "No updates so far.")

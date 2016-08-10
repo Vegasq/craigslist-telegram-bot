@@ -1,3 +1,5 @@
+import aiohttp
+
 from craigslist_telegram_bot.log import LOG
 import feedparser
 import re
@@ -69,6 +71,7 @@ class Posts(object):
     def __init__(self, parsed_feed):
         self._parsed_feed = parsed_feed
         self._posts = []
+        LOG.error(self._parsed_feed)
         if not self._parsed_feed["entries"]:
             LOG.error("Empty result")
         else:
@@ -81,6 +84,9 @@ class Posts(object):
     def __iter__(self):
         self._iter_index = 0
         return self
+
+    def __await__(self):
+        yield from self._posts
 
     def next(self):
         try:
@@ -101,3 +107,31 @@ def get_posts(city, query):
     parsed_feed = feedparser.parse(url)
 
     return Posts(parsed_feed)
+
+
+async def get_posts_async(loop, city, query):
+    url = CRAIGLIST_SEARCH_URL.format(city=city,
+                                      search=query.replace(" ", "+"))
+    LOG.debug(url)
+
+    with aiohttp.Timeout(10):
+        with aiohttp.ClientSession(loop=loop) as session:
+            async with session.get(url) as response:
+                assert response.status == 200
+                data = await response.read()
+                return Posts(feedparser.parse(data))
+
+
+#
+# @coroutine
+# def parse(url):
+#     return [x for x in feedparser.parse(url)]
+#
+#
+# async def get_posts_async(city, query):
+#     url = CRAIGLIST_SEARCH_URL.format(
+#         city=city, search=query.replace(" ", "+"))
+#     LOG.debug(url)
+#     parsed_feed = parse(url)
+#
+#     await Posts(parsed_feed)

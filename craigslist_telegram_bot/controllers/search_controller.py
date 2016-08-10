@@ -12,6 +12,7 @@ def search(context, bot, update):
 
     LOG.debug("Search actionn for user: %s, keyword: %s" %
               (context.user_id, update.message.text))
+
     posts = feed.get_posts(context.city, update.message.text)
 
     text = ""

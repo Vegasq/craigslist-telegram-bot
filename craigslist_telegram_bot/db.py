@@ -59,6 +59,19 @@ class ContextModel(GenericMongoModel):
             user_id = self.user_id
         self.table.delete_one({"user_id": user_id})
 
+    def is_next_step_available(self):
+        if self.data and 'function' in self.data and 'method' in self.data:
+            return True
+        return False
+
+    def is_next_step_city_set(self):
+        fn_place = "craigslist_telegram_bot.controllers.city_controller"
+        if self.data and 'function' in self.data and 'method' in self.data:
+            if self.data['function'] == fn_place and \
+                            self.data['method'] == "city":
+                return True
+        return False
+
     def next_step(self, bot, update):
         # Execute
         if self.data and 'function' in self.data and 'method' in self.data:

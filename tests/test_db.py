@@ -85,6 +85,7 @@ class TestCityModel(object):
 
         cm = db.CityModel()
         update_one = mocker.patch.object(cm.table, 'update_one')
+        mocker.patch.object(cm.table, 'is_city_set', return_value=True)
         cm.update_city(FAKE_USER_ID, FAKE_CITY_NAME)
         update_one.assert_called_once_with(
             {'user_id': FAKE_USER_ID}, {'$set': {'city': FAKE_CITY_NAME}})

@@ -29,6 +29,11 @@ Avaliable commands:
 
 @utils.context_wrapper
 def start(context, bot, update):
+    context.set_context({
+        'function': "craigslist_telegram_bot.controllers.city_controller",
+        'method': "city"})
+    message = "Tell us city you are from."
+
     utils.send_message_with_keyboard(bot, update, message)
 
 

@@ -18,6 +18,7 @@ class Robot(object):
 
         # Register WatchController
         up_handler = CommandHandler("up", watch_controller.updates)
+        up2_handler = CommandHandler("up2", watch_controller.updates_async)
         watch_handler = CommandHandler("watch", watch_controller.watch)
         update_handler = CommandHandler("update", watch_controller.updates)
         unwatch_handler = CommandHandler("unwatch", watch_controller.unwatch)
@@ -29,6 +30,7 @@ class Robot(object):
         self.dispatcher.add_handler(watchls_handler)
         self.dispatcher.add_handler(update_handler)
         self.dispatcher.add_handler(up_handler)
+        self.dispatcher.add_handler(up2_handler)
 
         # Register search_controller
         search_handler = MessageHandler([Filters.text],

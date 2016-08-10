@@ -6,6 +6,16 @@ from craigslist_telegram_bot.log import LOG
 @utils.context_wrapper
 def city(context, bot, update):
     city_name = utils.extract_command_value(update)
+
+    if not city_name:
+        utils.set_next_step_to_city_request(context)
+        message = "Tell us city you are from."
+
+        utils.send_message_with_unwatch_keyboard(
+            bot, update, message, [])
+
+        return
+
     if city_name not in utils.get_craigslist_sites():
         bot.sendMessage(
             chat_id=update.message.chat_id,
